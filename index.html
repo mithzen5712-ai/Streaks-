@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Streaks – Habit Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fbf7f0;--ink:#12284c;--mute:#5a6785;--card:#fffdf9;--line:#e6dfd2;--accent:#8db4ff;--green:#2563eb;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1b33;--ink:#eaf0ff;--mute:#9bb0d8;--card:#172846;--line:#2a3f66}}
+:root[data-theme="dark"]{--bg:#0e1b33;--ink:#eaf0ff;--mute:#9bb0d8;--card:#172846;--line:#2a3f66}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,sans-serif}
+main{max-width:480px;margin:0 auto;padding:20px 16px 40px}
+h1{font:800 34px 'Bricolage Grotesque',system-ui,sans-serif;margin:8px 0 2px;letter-spacing:-.5px}
+.sub{color:var(--mute);margin:0 0 20px}
+.pro{display:inline-block;background:var(--accent);color:#12284c;font-weight:700;font-size:13px;padding:2px 10px;border-radius:99px;margin-left:8px;vertical-align:middle}
+.add{display:flex;gap:8px;margin-bottom:18px}
+input{flex:1;min-width:0;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:inherit}
+button{font:inherit;cursor:pointer;border:0}
+.btn{background:var(--green);color:#fff;padding:12px 18px;border-radius:12px;font-weight:700}
+.habit{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.top{display:flex;align-items:center;gap:12px}
+.check{width:44px;height:44px;border-radius:50%;border:2.5px solid var(--green);background:transparent;color:#fff;font-size:22px;flex:none}
+.check.on{background:var(--green)}
+.name{flex:1;font-weight:700;font-size:17px}
+.streak{font:800 20px 'Bricolage Grotesque',sans-serif}
+.streak small{display:block;font:500 11px system-ui;color:var(--mute);text-align:right}
+.dots{display:flex;gap:6px;margin-top:12px;align-items:center}
+.dot{width:26px;height:26px;border-radius:8px;background:var(--line);font-size:10px;color:var(--mute);display:grid;place-items:center}
+.dot.on{background:var(--accent);color:#12284c;font-weight:700}
+.del{margin-left:auto;background:none;color:var(--mute);font-size:13px}
+.empty{text-align:center;color:var(--mute);padding:36px 0}
+.stats{background:var(--ink);color:var(--bg);border-radius:16px;padding:14px 16px;margin-top:18px;display:flex;justify-content:space-between;align-items:center}
+.stats button{background:var(--accent);color:#12284c;font-weight:700;padding:8px 14px;border-radius:10px}
+.modal{position:fixed;inset:0;background:rgba(10,20,17,.6);display:none;align-items:flex-end;justify-content:center;z-index:9}
+.modal.show{display:flex}
+.sheet{background:var(--card);width:100%;max-width:480px;border-radius:24px 24px 0 0;padding:26px 22px calc(26px + env(safe-area-inset-bottom,0px))}
+.sheet h2{font:800 26px 'Bricolage Grotesque',sans-serif;margin:0 0 12px}
+.sheet ul{padding-left:20px;color:var(--mute);margin:0 0 18px}
+.sheet li{margin:6px 0}
+.buy{width:100%;background:var(--accent);color:#12284c;padding:15px;border-radius:14px;font-weight:800;font-size:17px}
+.alt{display:block;width:100%;background:none;color:var(--mute);margin-top:12px;padding:6px;font-size:14px}
+.prog{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:14px;margin-bottom:16px}
+.bar{height:10px;background:var(--line);border-radius:99px;overflow:hidden;margin:8px 0}
+.bar i{display:block;height:100%;background:var(--green);border-radius:99px;transition:width .4s}
+.prog b{font-weight:700}.prog small{color:var(--mute)}
+.prog.risk{border-color:var(--accent)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,120px);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:14px;font-weight:700;transition:transform .3s;z-index:20;max-width:90%;text-align:center}
+.toast.show{transform:translate(-50%,0)}
+.share{width:100%;margin-top:12px;background:none;border:1.5px solid var(--line);color:var(--ink);padding:12px;border-radius:12px;font-weight:700}
+@media (prefers-reduced-motion:reduce){.bar i,.toast{transition:none}}
+.sheet{max-height:92vh;overflow:auto}
+.sheet label{display:block;font-weight:700;margin:14px 0 6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.chips button{padding:8px 14px;border-radius:99px;border:1.5px solid var(--line);background:transparent;color:var(--ink)}
+.chips button.on{background:var(--green);color:#fff;border-color:var(--green)}
+.plan{border:1.5px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px}
+.plan.pop{border:2.5px solid var(--accent)}
+.plan h3{margin:0 0 4px;font:800 20px 'Bricolage Grotesque',sans-serif}
+.price{font:800 30px 'Bricolage Grotesque',sans-serif}.price small{font:500 14px system-ui;color:var(--mute)}
+.plan ul{margin:8px 0 12px}
+.seg{display:flex;background:var(--line);border-radius:12px;padding:4px;margin-bottom:14px}
+.seg button{flex:1;padding:8px;border-radius:9px;background:transparent;color:var(--ink);font-weight:700}
+.seg button.on{background:var(--card)}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.b{padding:6px 12px;border-radius:99px;font-size:13px;font-weight:700;background:var(--accent);color:#12284c}
+.b.lock{background:var(--line);color:var(--mute)}
+.intro{position:fixed;inset:0;background:#12284c;color:#eaf0ff;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;z-index:30;gap:12px;overflow:auto}
+.intro.show{display:flex}
+.intro h1{font-size:60px;margin:0;line-height:1}
+.intro p{margin:0;color:#a9b9db}
+.intro .buy{max-width:360px}
+.intro ul{list-style:none;padding:0;margin:6px 0 10px;text-align:left}
+.intro li{margin:8px 0;font-size:17px}
+.quote{border-left:4px solid var(--accent);padding:6px 12px;margin:0 0 16px;color:var(--mute);font-style:italic}
+.ic{margin-right:4px}
+.intro{cursor:pointer}
+.intro .tap{margin-top:48px;font-size:18px;font-weight:700;color:#8db4ff;animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.intro .tap{animation:none}}
+.dots{display:flex;gap:6px;margin-bottom:16px}
+.dots i{flex:1;height:5px;border-radius:99px;background:var(--line)}
+.dots i.on{background:var(--accent)}
+.nav{display:flex;gap:10px;margin-top:18px}
+.nav .alt{margin:0;width:auto;flex:1}.nav .buy{flex:2}
+.chips.big{flex-direction:column}
+.chips.big button{padding:14px 18px;font-size:17px;text-align:left;border-radius:14px}
+.buy:disabled{opacity:.4}
+#obBody>*{animation:slidein .25s ease-out}
+@keyframes slidein{from{transform:translateX(24px);opacity:0}}
+@media (prefers-reduced-motion:reduce){#obBody>*{animation:none}}
+.qpic{width:84px;height:84px;border-radius:50%;background:#dbe7ff;display:grid;place-items:center;font-size:42px;margin:0 0 12px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<main>
+  <div id="banner" style="margin-bottom:6px"></div>
+  <h1>Streaks<span id="badge"></span></h1>
+  <p class="sub" id="sub"></p>
+  <div class="quote" id="quote"></div>
+  <div class="prog" id="prog"></div>
+  <div class="prog" id="lvl"></div>
+  <div class="add">
+    <input id="inp" placeholder="New habit, e.g. Drink water" maxlength="40" aria-label="New habit">
+    <button class="btn" id="addBtn">Add</button>
+  </div>
+  <div class="chips" id="sugg"></div>
+  <div id="list"></div>
+  <div class="stats" id="stats"></div>
+  <div class="badges" id="badges"></div>
+  <button class="share" id="share">Share my streak</button>
+  <button class="alt" id="retake">Retake my questions</button>
+  <button class="alt" id="logout"></button>
+</main>
+
+<div class="intro show" id="intro" role="button" tabindex="0" aria-label="Tap to start">
+  <svg viewBox="0 0 64 64" width="150" height="150" role="img" aria-label="Streaks logo"><rect width="64" height="64" rx="18" fill="#8db4ff"/><path d="M33 9c2 9 12 14 12 27a13 13 0 0 1-26 0c0-6 3-10 6-13 0 5 2 7 4 8-1-7 0-14 4-22z" fill="#12284c"/><path d="M32 53a7 7 0 0 1-7-7c0-4 3-6 5-9 1 3 3 4 4 5 1-2 1-4 1-6 3 3 4 6 4 10a7 7 0 0 1-7 7z" fill="#fff"/></svg>
+  <h1>Streaks</h1>
+  <p class="tap">Tap to start</p>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<div class="modal" id="modal" role="dialog" aria-modal="true">
+  <div class="sheet">
+    <h2>Choose your plan</h2>
+    <div id="trialBox"></div>
+    <div class="seg"><button id="mo" class="on">Monthly</button><button id="yr">Yearly</button></div>
+    <div id="plans"></div>
+    <button class="alt" id="restore">Restore purchase</button>
+    <button class="alt" id="close">Not now</button>
+  </div>
+</div>
+<div class="modal" id="auth" role="dialog" aria-modal="true">
+  <div class="sheet">
+    <h2 id="authTitle">Create your account</h2>
+    <p class="sub" style="margin:0">Save your streaks and keep them on every device.</p>
+    <label for="aEmail">Email</label>
+    <input id="aEmail" type="email" autocomplete="email" placeholder="you@example.com">
+    <label for="aPass">Password</label>
+    <input id="aPass" type="password" autocomplete="current-password" placeholder="At least 6 characters">
+    <p id="aErr" role="alert" style="color:#e0604f;margin:10px 0 0;min-height:1.2em"></p>
+    <button class="buy" id="aGo" style="margin-top:8px">Sign up</button>
+    <button class="alt" id="aSwitch"></button>
+    <p class="sub" id="aDemo" style="font-size:13px;margin:6px 0 0"></p>
+  </div>
+</div>
+<div class="modal" id="win" role="dialog" aria-modal="true">
+  <div class="sheet" style="text-align:center">
+    <div style="font-size:64px" aria-hidden="true">🏆</div>
+    <h2 id="winT"></h2>
+    <p class="sub" id="winP"></p>
+    <button class="buy" id="winGo">See Gold and Premium</button>
+    <button class="alt" id="winClose">Maybe later</button>
+  </div>
+</div>
+<div class="modal" id="ob" role="dialog" aria-modal="true">
+  <div class="sheet">
+    <div class="dots" id="obDots"></div>
+    <div id="obBody"></div>
+    <div class="nav"><button class="alt" id="obBack">Back</button><button class="buy" id="obNext">Next</button></div>
+    <button class="alt" id="obTrial">Start 7-day free Gold trial</button>
+  </div>
+</div>
+
+<script>
+/* ===================== PAYWALL / REVENUECAT =====================
+   Replace the body of purchasePro() and restorePro() with your RevenueCat
+   calls (e.g. RevenueCat Web Billing SDK: Purchases.configure(...),
+   purchases.purchase({rcPackage}) ). On success call setPlan(tier).
+   Right now it runs in DEMO mode: tapping Unlock Pro just turns Pro on. */
+const PLANS={
+  free:{name:'Free'},
+  basic:{name:'Basic',m:14,y:180,feats:['Up to 10 habits','Daily progress and streaks']},
+  gold:{name:'Gold',m:24,y:280,feats:['Unlimited habits','Best streak and 30-day stats']},
+  premium:{name:'Premium',m:44,y:480,feats:['Everything in Gold','Early access to new features','Priority support']}
+};
+const LIMIT={free:3,basic:10,gold:Infinity,premium:Infinity};
+/* RevenueCat product IDs to create: streaks_basic_monthly, streaks_basic_yearly,
+   streaks_gold_monthly, streaks_gold_yearly, streaks_premium_monthly, streaks_premium_yearly */
+/* RevenueCat Web Billing public API key (starts with rcb_). Leave empty for demo mode,
+   where tapping a plan unlocks it for free. With a key, plans unlock only after real payment.
+   RevenueCat setup: entitlements "basic", "gold", "premium"; one offering (current) with 6 packages
+   whose identifiers are basic_monthly, basic_yearly, gold_monthly, gold_yearly, premium_monthly, premium_yearly. */
+const RC_API_KEY='';
+let rc=null, rcUid=null, rcLoading=null;
+const getUid=()=>(user&&(user.id||user.email))||load('uid')||(()=>{const u='anon_'+Math.random().toString(36).slice(2,12);save('uid',u);return u})();
+function ensureRC(){
+  if(!RC_API_KEY) return Promise.resolve(null);
+  if(rc) return Promise.resolve(rc);
+  if(rcLoading) return rcLoading;
+  rcLoading=new Promise(res=>{
+    const sc=document.createElement('script');
+    sc.src='https://cdn.jsdelivr.net/npm/@revenuecat/purchases-js@1/dist/Purchases.umd.js';
+    sc.onload=()=>{ try{ const P=window.Purchases.Purchases||window.Purchases; rcUid=getUid();
+      rc=P.configure({apiKey:RC_API_KEY,appUserId:rcUid}); res(rc); }catch(e){ console.error(e); res(null); } };
+    sc.onerror=()=>res(null);
+    document.head.appendChild(sc);
+  });
+  return rcLoading;
+}
+async function rcReady(){
+  const r=await ensureRC();
+  if(r&&rcUid!==getUid()){ try{ await r.changeUser(getUid()); }catch(e){} rcUid=getUid(); }
+  return r;
+}
+async function syncPlan(){
+  const r=await rcReady(); if(!r) return;
+  try{ const ci=await r.getCustomerInfo(), act=ci.entitlements.active||{};
+    setPlan(['premium','gold','basic'].find(k=>act[k])||'free'); }catch(e){ console.error(e); }
+}
+async function purchasePlan(tier,per){
+  if(!RC_API_KEY){ setPlan(tier); return; }   // demo mode
+  const r=await rcReady();
+  if(!r){ toast('Payments could not load. Check your connection and try again.'); return; }
+  try{
+    const off=await r.getOfferings(), id=tier+'_'+(per==='m'?'monthly':'yearly');
+    const pkg=off.current&&off.current.availablePackages.find(x=>x.identifier===id);
+    if(!pkg){ toast('This plan is not available yet.'); return; }
+    await r.purchase({rcPackage:pkg});
+    await syncPlan(); toast('Payment complete. Welcome to '+PLANS[tier].name+'!');
+  }catch(e){ console.error(e); toast('No payment was made.'); }
+}
+async function restorePlan(){
+  if(!RC_API_KEY){ if(load('plan')) setPlan(load('plan')); return; }
+  await syncPlan(); toast('Checked your purchases.');
+}
+/* ================================================================ */
+
+function load(k){try{return JSON.parse(localStorage.getItem('streaks_'+k))}catch(e){return null}}
+function save(k,v){try{localStorage.setItem('streaks_'+k,JSON.stringify(v))}catch(e){}}
+let habits = load('habits') || [];
+let trialEnd = load('trial')||0, plan = load('plan')||'free', profile = load('profile'), period='m';
+const $ = id => document.getElementById(id);
+const day = d => d.toISOString().slice(0,10);
+const today = () => { const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return day(d); };
+const back = n => { const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); d.setDate(d.getDate()-n); return day(d); };
+
+const trialActive=()=>trialEnd>Date.now();
+const cur=()=>plan!=='free'?plan:(trialActive()?'gold':'free');
+function startTrial(){ trialEnd=Date.now()+7*864e5; save('trial',trialEnd); $('modal').classList.remove('show'); render(); toast('Gold trial started. Enjoy 7 days.'); }
+const HERO='<svg viewBox="0 0 280 60" width="260" aria-hidden="true">'+[0,1,2,3,4,5,6].map(i=>i<6?'<circle cx="'+(20+i*40)+'" cy="30" r="16" fill="#8db4ff"/><path d="M'+(13+i*40)+' 30l5 5 9-10" stroke="#12284c" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>':'<circle cx="260" cy="30" r="16" fill="none" stroke="#8db4ff" stroke-width="3" stroke-dasharray="4 4"/><text x="260" y="38" text-anchor="middle" font-size="22">🔥</text>').join('')+'</svg>';
+const BANNER='<svg viewBox="0 0 480 120" preserveAspectRatio="xMidYMid slice" width="100%" height="110" role="img" aria-label="Sunrise over blue hills" style="border-radius:18px;display:block"><defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9dc0ff"/><stop offset="1" stop-color="#fde9cf"/></linearGradient></defs><rect width="480" height="120" fill="url(#sk)"/><circle cx="360" cy="68" r="26" fill="#fff6e0"/><path d="M0 95Q80 55 170 85T340 80T480 70V120H0Z" fill="#5b8def"/><path d="M0 108Q100 80 200 104T400 98T480 100V120H0Z" fill="#2563eb"/><path d="M60 66c1 6 7 9 7 16a7 7 0 0 1-14 0c0-4 2-6 4-8 0 3 1 4 2 5 0-4 0-9 1-13z" fill="#12284c"/></svg>';
+const QPIC={name:'👋',goal:'🎯',count:'📋',exp:'🌱',time:'⏰',support:'🤝'};
+const QUOTES=['Show up today. That is the whole job.','Small steps still count.','Do it badly if you must, but do it.','Your future self is watching.','Never miss twice.','Progress beats perfect.','One check-in keeps the chain alive.','Start with two minutes.','Consistency is quiet and powerful.','Today is a good day to keep going.','Make it easy, then make it daily.','You are what you repeat.','Momentum starts with one tap.','Protect your streak.'];
+const ICONS=[[/water|drink/i,'💧'],[/walk|run|exercise|workout|gym/i,'🏃'],[/sleep|bed/i,'😴'],[/read|book|pages/i,'📖'],[/meditat|mind|breath/i,'🧘'],[/journal|write/i,'📝'],[/language|study|learn|notes|review/i,'🎓'],[/deep work|focus/i,'💻'],[/phone/i,'📵'],[/friend|text|call|family/i,'👥'],[/stretch|yoga/i,'🤸'],[/tidy|clean/i,'🧹'],[/outside|nature/i,'🌳'],[/plan/i,'🗓️']];
+const iconFor=n=>{for(const [r,e] of ICONS) if(r.test(n)) return e; return '⭐'};
+function renderBadges(){
+  const all=habits.reduce((n,h)=>n+h.done.length,0), bs=habits.reduce((m,h)=>Math.max(m,best(h)),0);
+  const B=[['First check-in',all>=1],['3-day streak',bs>=3],['7-day streak',bs>=7],['30-day streak',bs>=30],['100-day streak',bs>=100],['50 check-ins',all>=50]];
+  $('badges').innerHTML=B.map(([n,ok])=>'<span class="b'+(ok?'':' lock')+'">'+(ok?'★ ':'')+n+'</span>').join('');
+}
+function setPlan(p){ plan=p; save('plan',p); $('modal').classList.remove('show'); render(); }
+function streak(h){ let n=0,i=h.done.includes(today())?0:1; while(h.done.includes(back(i))){n++;i++} return n; }
+function best(h){ const s=[...h.done].sort(); let b=0,c=0,p=null;
+  for(const d of s){ c=(p && (new Date(d)-new Date(p))===86400000)?c+1:1; b=Math.max(b,c); p=d; } return b; }
+function renderPlans(){
+  const tb=$('trialBox');
+  if(plan==='free'&&!trialEnd){ tb.innerHTML='<button class="buy" id="trial" style="margin-bottom:14px">Start 7-day free Gold trial</button>'; $('trial').onclick=startTrial; }
+  else if(plan==='free'&&trialActive()){ tb.innerHTML='<p class="sub">Gold trial ends in '+Math.ceil((trialEnd-Date.now())/864e5)+' days.</p>'; }
+  else tb.innerHTML='';
+  $('mo').className=period==='m'?'on':''; $('yr').className=period==='y'?'on':'';
+  $('plans').innerHTML=['basic','gold','premium'].map(k=>{
+    const p=PLANS[k], save=p.m*12-p.y, tag=(profile&&profile.rec)?(k===profile.rec?'Best for you':''):(k==='gold'?'Most popular':'');
+    return '<div class="plan'+(tag?' pop':'')+'"><h3>'+p.name+(tag?' <span class="pro">'+tag+'</span>':'')+'</h3>'+
+      '<div class="price">$'+p[period]+'<small>'+(period==='m'?' per month':' per year')+'</small></div>'+
+      (period==='y'&&save>0?'<small>Save $'+save+' vs monthly</small>':'')+
+      '<ul>'+p.feats.map(f=>'<li>'+f+'</li>').join('')+'</ul>'+
+      '<button class="buy" data-p="'+k+'">'+(plan===k?'Current plan':'Choose '+p.name)+'</button></div>';
+  }).join('');
+  $('plans').querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>purchasePlan(b.dataset.p,period));
+}
+const SUGG={Health:['Drink water','Walk 20 minutes','Sleep by 11pm'],Focus:['Deep work 1 hour','No phone first hour','Plan tomorrow'],
+  Learning:['Read 10 pages','Practice a language','Review notes'],Mood:['Meditate 5 minutes','Write in journal','Text a friend'],Other:['Stretch','Tidy up','Go outside']};
+function renderSugg(){
+  const S=$('sugg'); if(!profile){S.innerHTML='';return}
+  const have=habits.map(h=>h.name), list=(SUGG[profile.goal]||SUGG.Other).filter(n=>!have.includes(n));
+  S.innerHTML=list.map(n=>'<button data-s="'+n+'">+ '+n+'</button>').join('');
+  S.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{$('inp').value=b.dataset.s;addHabit()});
+}
+/* ============ LOGIN / SIGN UP ============
+   Paste your Supabase project URL and public anon key to turn on real accounts.
+   Leave empty for demo mode (no password check, saved on this device only). */
+const SUPABASE_URL='', SUPABASE_KEY='';
+let sb=null, user=load('user'), mode='up';
+function setMode(m){ mode=m;
+  $('authTitle').textContent=m==='up'?'Create your account':'Welcome back';
+  $('aGo').textContent=m==='up'?'Sign up':'Log in';
+  $('aSwitch').textContent=m==='up'?'Already have an account? Log in':'New here? Sign up';
+  $('aErr').textContent=''; }
+function initSb(){
+  if(!SUPABASE_URL) return;
+  const sc=document.createElement('script');
+  sc.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';
+  sc.onload=async()=>{ sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+    const {data}=await sb.auth.getSession();
+    if(data.session){ user={email:data.session.user.email,id:data.session.user.id}; save('user',user); render(); } };
+  document.head.appendChild(sc);
+}
+async function authSubmit(){
+  const email=$('aEmail').value.trim(), pw=$('aPass').value, err=$('aErr');
+  if(!/^\S+@\S+\.\S+$/.test(email)){ err.textContent='Enter a valid email.'; return; }
+  if(pw.length<6){ err.textContent='Password needs at least 6 characters.'; return; }
+  err.textContent='';
+  let uid;
+  if(SUPABASE_URL){
+    if(!sb){ err.textContent='Still loading. Try again in a moment.'; return; }
+    const r = mode==='up' ? await sb.auth.signUp({email,password:pw}) : await sb.auth.signInWithPassword({email,password:pw});
+    if(r.error){ err.textContent=r.error.message; return; }
+    if(!r.data.session){ err.textContent='Check your email to confirm your account, then log in.'; return; }
+    uid=r.data.user.id;
+  }
+  user={email,id:uid}; save('user',user); $('auth').classList.remove('show'); if(RC_API_KEY) syncPlan();
+  if(!profile||!profile.rec) openOb(email.split('@')[0].slice(0,20)); else render();
+}
+async function logout(){
+  if(sb) try{ await sb.auth.signOut(); }catch(e){}
+  user=null; save('user',null); if(RC_API_KEY){ plan='free'; save('plan','free'); } render(); setMode('in'); $('auth').classList.add('show');
+}
+/* ============ QUESTION SLIDES ============ */
+const LV=[5,15,30], LVN=['Spark','Flame','Blaze'];
+const nm=()=>profile?profile.name:'friend';
+function greet(){ const h=new Date().getHours(); return h<12?'Good morning':h<18?'Good afternoon':'Good evening'; }
+function levelUp(tot){
+  const i=LV.indexOf(tot)+1;
+  if(i<3){ toast('Level '+i+' complete! You are glowing, '+nm()+'.'); return; }
+  const free=cur()==='free';
+  $('winT').textContent='You did it, '+nm()+'. All 3 levels complete!';
+  $('winP').textContent=free?'Your consistency is truly beautiful. Gold and Premium unlock unlimited habits, deeper stats and more support, so you can keep growing.'
+    :'Your consistency is truly beautiful. You are a Blaze now. Keep shining.';
+  $('winGo').style.display=free?'block':'none'; $('winClose').textContent=free?'Maybe later':'Continue';
+  $('win').classList.add('show');
+}
+const QS=[
+ {k:'name',q:'What should we call you?',type:'text'},
+ {k:'goal',q:'What do you want to build habits for?',o:['Health','Focus','Learning','Mood','Other']},
+ {k:'count',q:'How many habits do you want to build?',o:['1 to 3','4 to 10','More than 10']},
+ {k:'exp',q:'How often do you stick with new habits?',o:['Rarely','Sometimes','Usually']},
+ {k:'time',q:'When do you usually have time?',o:['Morning','Afternoon','Evening']},
+ {k:'support',q:'What kind of help do you want?',o:['A simple tracker','Stats and progress','Extra support and new features']}
+];
+const OPT_ICON={Health:'💪',Focus:'🎯',Learning:'📚',Mood:'😊',Other:'✨',Morning:'🌅',Afternoon:'☀️',Evening:'🌙'};
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let ans={}, step=0;
+function openOb(prefill){ step=0; ans={name:prefill||''}; renderOb(); $('ob').classList.add('show'); }
+function recommend(){
+  const c={'1 to 3':0,'4 to 10':1,'More than 10':2}[ans.count]??1;
+  const sp={'A simple tracker':0,'Stats and progress':1,'Extra support and new features':2}[ans.support]??1;
+  const sc=c+sp+(ans.exp==='Rarely'?1:0);
+  let rec=sc<=1?'basic':sc<=3?'gold':'premium';
+  if(c===2&&rec==='basic') rec='gold';
+  return rec;
+}
+const WHY={basic:'You want a simple setup with a handful of habits.',gold:'You want more habits and stats to see your progress.',premium:'You want the most support and early access to new features.'};
+function renderOb(){
+  const n=QS.length;
+  if(step>=n) return renderResult();
+  const q=QS[step];
+  $('obDots').innerHTML=QS.map((_,i)=>'<i class="'+(i<=step?'on':'')+'"></i>').join('');
+  let h='<div class="qpic">'+QPIC[q.k]+'</div><h2>'+q.q+'</h2>';
+  h+= q.type==='text' ? '<input id="obName" maxlength="20" placeholder="Your first name" aria-label="Your name">'
+    : '<div class="chips big">'+q.o.map(o=>'<button data-v="'+o+'" class="'+(ans[q.k]===o?'on':'')+'">'+(OPT_ICON[o]?OPT_ICON[o]+' ':'')+o+'</button>').join('')+'</div>';
+  $('obBody').innerHTML=h;
+  if(q.type==='text') $('obName').value=ans.name||'';
+  else $('obBody').querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{ ans[q.k]=b.dataset.v; renderOb(); setTimeout(()=>{ step++; renderOb(); },220); });
+  $('obBack').style.visibility=step?'visible':'hidden'; $('obBack').textContent='Back';
+  $('obNext').textContent=step===n-1?'See my plan':'Next'; $('obNext').disabled=q.type!=='text'&&!ans[q.k];
+  $('obTrial').style.display='none';
+}
+function obNext(){
+  if(step>=QS.length){ $('ob').classList.remove('show'); $('modal').classList.add('show'); return; }
+  if(QS[step].type==='text') ans.name=$('obName').value.trim();
+  step++; renderOb();
+}
+function obBack(){
+  if(step>=QS.length){ $('ob').classList.remove('show'); return; }
+  if(QS[step].type==='text') ans.name=$('obName').value.trim();
+  if(step>0){ step--; renderOb(); }
+}
+function renderResult(){
+  const rec=recommend(), p=PLANS[rec], name=ans.name||'friend', goal=ans.goal||'Other';
+  profile={name,goal,time:ans.time||'Morning',count:ans.count,exp:ans.exp,support:ans.support,rec}; save('profile',profile);
+  if(!habits.length){ habits=(SUGG[goal]||SUGG.Other).slice(0,3).map((n,i)=>({id:Date.now()+i,name:n,done:[]})); save('habits',habits); }
+  render();
+  $('obDots').innerHTML=QS.map(()=>'<i class="on"></i>').join('');
+  $('obBody').innerHTML='<div class="qpic">🎉</div><h2>Your perfect plan, '+esc(name)+'</h2><div class="plan pop"><h3>'+p.name+' <span class="pro">Best for you</span></h3>'+
+    '<div class="price">$'+p.m+'<small> per month</small></div><p class="sub" style="margin:6px 0">'+WHY[rec]+(ans.exp==='Rarely'?' Habits have been hard to keep, so extra help matters.':'')+'</p>'+
+    '<ul>'+p.feats.map(f=>'<li>'+f+'</li>').join('')+'</ul></div>'+
+    '<p class="sub">We added 3 '+esc(goal.toLowerCase())+' habits to get you started.</p>';
+  $('obBack').style.visibility='visible'; $('obBack').textContent='Continue free';
+  $('obNext').textContent='Choose '+p.name; $('obNext').disabled=false;
+  $('obTrial').style.display=(plan==='free'&&!trialEnd)?'block':'none';
+}
+function persist(){ save('habits',habits); render(); }
+
+function addHabit(){
+  const name=$('inp').value.trim(); if(!name) return;
+  if(habits.length>=LIMIT[cur()]){ $('modal').classList.add('show'); return; }
+  habits.push({id:Date.now(),name,done:[]}); $('inp').value=''; persist();
+}
+function toggle(id){ const h=habits.find(x=>x.id===id), t=today();
+  const was=h.done.includes(t);
+  h.done = was ? h.done.filter(d=>d!==t) : [...h.done,t]; persist();
+  if(was) return;
+  const tot=habits.reduce((c,x)=>c+x.done.length,0);
+  if(LV.includes(tot)){ levelUp(tot); return; }
+  const n=streak(h), MS=[3,7,14,30,60,100];
+  if(MS.includes(n)) toast('🔥 '+n+'-day streak on "'+h.name+'"!');
+  else if(habits.every(x=>x.done.includes(t))) toast('All done today. You are wonderful, '+nm()+'. See you tomorrow!');
+  else toast(['Lovely work, '+nm()+'.','You showed up. That is beautiful.','Another win for you, '+nm()+'.'][n%3]); }
+let tt; function toast(m){ const e=$('toast'); e.textContent=m; e.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>e.classList.remove('show'),2600); }
+async function shareStreak(){
+  const b=habits.reduce((m,h)=>Math.max(m,streak(h)),0);
+  const txt='I am on a '+b+'-day streak with Streaks. Build yours: '+location.href;
+  try{ if(navigator.share){ await navigator.share({text:txt}); } else { await navigator.clipboard.writeText(txt); toast('Copied. Paste it anywhere.'); } }catch(e){}
+}
+function remove(id){ if(confirm('Delete this habit?')){ habits=habits.filter(h=>h.id!==id); persist(); } }
+
+function render(){
+  $('badge').innerHTML = cur()!=='free' ? '<span class="pro">'+PLANS[cur()].name+(plan==='free'?' trial':'')+'</span>' : '';
+  $('sub').textContent = (profile?greet()+', '+profile.name+'. ':'')+(LIMIT[cur()]===Infinity?'Unlimited habits.':habits.length+' of '+LIMIT[cur()]+' habits used.');
+  renderPlans(); renderSugg(); renderBadges();
+  $('logout').style.display=user?'block':'none'; $('logout').textContent=user?'Log out ('+user.email+')':'';
+  const t=today(), L=$('list');
+  const P=$('prog'), dn=habits.filter(h=>h.done.includes(t)).length, risk=habits.filter(h=>streak(h)>0&&!h.done.includes(t));
+  P.style.display=habits.length?'block':'none';
+  P.className='prog'+(risk.length&&dn<habits.length?' risk':'');
+  P.innerHTML='<b>Today: '+dn+' of '+habits.length+' done</b><div class="bar"><i style="width:'+(habits.length?dn/habits.length*100:0)+'%"></i></div><small></small>';
+  P.querySelector('small').textContent = dn===habits.length&&habits.length ? 'Perfect day. Your streaks are safe.' : risk.length ? 'Check in to keep '+risk.length+(risk.length>1?' streaks':' streak')+' alive.' : 'Tap a circle to start your day.';
+  const all=habits.reduce((n,h)=>n+h.done.length,0), d3=LV.filter(x=>all>=x).length;
+  $('lvl').style.display=habits.length?'block':'none';
+  if(d3<3){ const lo=d3?LV[d3-1]:0, hi=LV[d3];
+    $('lvl').innerHTML='<b>Level '+(d3+1)+' of 3: '+LVN[d3]+'</b><div class="bar"><i style="width:'+Math.round((all-lo)/(hi-lo)*100)+'%"></i></div><small>'+(hi-all)+' more check-ins to finish this level. You are doing beautifully.</small>';
+  } else $('lvl').innerHTML='<b>All 3 levels complete 🏆</b><br><small>'+(cur()==='free'?'Unlock Gold or Premium to keep growing.':'You are a Blaze. Keep shining.')+'</small>'+(cur()==='free'?'<button class="share" id="lvlUp" style="margin-top:10px">See Gold and Premium</button>':'');
+  if($('lvlUp')) $('lvlUp').onclick=()=>$('modal').classList.add('show');
+  $('quote').textContent=QUOTES[Math.floor(Date.now()/864e5)%QUOTES.length];
+  $('share').style.display = habits.some(h=>streak(h)>0)?'block':'none';
+  if(!habits.length){ L.innerHTML='<div class="empty"><div style="background:#12284c;border-radius:16px;padding:14px;margin-bottom:12px">'+HERO+'</div>No habits yet. Add one above and tap the circle each day.</div>'; }
+  else L.innerHTML = habits.map(h=>{
+    const dots=[6,5,4,3,2,1,0].map(n=>{const d=back(n);const lbl=new Date(d+'T12:00').toLocaleDateString('en',{weekday:'narrow'});
+      return '<div class="dot'+(h.done.includes(d)?' on':'')+'">'+lbl+'</div>'}).join('');
+    return '<div class="habit"><div class="top"><button class="check'+(h.done.includes(t)?' on':'')+'" data-t="'+h.id+'" aria-label="Mark done today">'+(h.done.includes(t)?'✓':'')+'</button>'+
+      '<div class="name"></div><div class="streak">'+streak(h)+'<small>day streak</small></div></div>'+
+      '<div class="dots">'+dots+'<button class="del" data-d="'+h.id+'">Delete</button></div></div>';
+  }).join('');
+  [...L.querySelectorAll('.name')].forEach((el,i)=>el.textContent=iconFor(habits[i].name)+' '+habits[i].name);
+  L.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>toggle(+b.dataset.t));
+  L.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>remove(+b.dataset.d));
+  const S=$('stats');
+  if(cur()==='gold'||cur()==='premium'){
+    const b=habits.reduce((m,h)=>Math.max(m,best(h)),0);
+    let tot=0; habits.forEach(h=>{for(let i=0;i<30;i++) if(h.done.includes(back(i))) tot++});
+    const pct=habits.length?Math.round(tot/(habits.length*30)*100):0;
+    S.innerHTML='<div><strong>Best streak: '+b+' days</strong><br>30-day completion: '+pct+'%</div>';
+  } else {
+    S.innerHTML='<div>Stats and more habits</div><button id="up">Upgrade</button>';
+    $('up').onclick=()=>$('modal').classList.add('show');
+  }
+}
+$('addBtn').onclick=addHabit; $('share').onclick=shareStreak;
+$('inp').addEventListener('keydown',e=>{if(e.key==='Enter')addHabit()});
+$('restore').onclick=restorePlan;
+$('mo').onclick=()=>{period='m';renderPlans()}; $('yr').onclick=()=>{period='y';renderPlans()};
+$('obBack').onclick=obBack; $('obNext').onclick=obNext; $('obTrial').onclick=()=>{ $('ob').classList.remove('show'); startTrial(); };
+$('close').onclick=()=>$('modal').classList.remove('show');
+const startApp=()=>{ $('intro').classList.remove('show');
+  if(!user) $('auth').classList.add('show'); else if(!profile||!profile.rec) openOb(user.email.split('@')[0].slice(0,20)); };
+$('aGo').onclick=authSubmit; $('aSwitch').onclick=()=>setMode(mode==='up'?'in':'up'); $('logout').onclick=logout;
+$('winGo').onclick=()=>{ $('win').classList.remove('show'); $('modal').classList.add('show'); };
+$('winClose').onclick=()=>$('win').classList.remove('show'); $('retake').onclick=()=>openOb(profile?profile.name:'');
+setMode('up'); initSb();
+$('aDemo').textContent=SUPABASE_URL?'':'Demo mode: accounts are saved on this device only.';
+$('intro').onclick=startApp; $('intro').onkeydown=e=>{if(e.key==='Enter'||e.key===' ')startApp()};
+$('banner').innerHTML=BANNER;
+render();
+if(RC_API_KEY) syncPlan();
+</script>
+</body>
+</html>
